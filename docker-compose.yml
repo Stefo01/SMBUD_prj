@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch
+    environment:
+      discovery.type: 'single-node'
+      xpack.security.enabled: 'true'
+      ELASTIC_PASSWORD: 'SecureP4ssword'
+      ES_JAVA_OPTS: '-Xmx2g -Xms2g'
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - ELKnetwork
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      ELASTICSEARCH_USERNAME: "elastic"
+      ELASTICSEARCH_PASSWORD: "SecureP4ssword"
+      ELASTICSEARCH_APIKEY: "h_EwTLvgQIGEPn7MCYhIbw"
+    networks:
+      - ELKnetwork
+    depends_on:
+      - elasticsearch
+
+  web-ui:
+    build:
+      context: ./web_ui
+      dockerfile: Dockerfile
+    container_name: web_ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+      - elasticsearch
+      - kibana
+
+networks:
+  ELKnetwork:
+    driver: bridge
+
+volumes:
+  mongodb_data:
