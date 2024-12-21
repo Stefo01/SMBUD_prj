@@ -1,18 +1,12 @@
-# Base image for your web interface
-FROM node:20
+FROM node:18-alpine
 
-# Set working directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy package.json and install dependencies
-COPY package.json package-lock.json ./
-RUN npm install
-
-# Copy the rest of the application code
+# Copia i file necessari
 COPY . .
 
-# Expose the application port
-EXPOSE 8080
+# Installa un semplice server statico
+RUN npm install -g serve
 
-# Start the application
-CMD ["npm", "start"]
+# Comando per avviare il server
+CMD ["serve", "-s", ".", "-l", "8080"]
