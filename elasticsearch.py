@@ -25,14 +25,18 @@ print("Preprocessing the dataset...")
 df = df.fillna("")
 df.rename(columns=lambda x: x.strip().lower().replace(" ", "_"), inplace=True)
 
+# Index name in Elasticsearch
 index_name = "global_terrorism"
 
+# Convert DataFrame to a list of dictionaries
 records = df.to_dict(orient="records")
 
+# Create Elasticsearch index
 if not es.indices.exists(index=index_name):
     print(f"Creating index: {index_name}")
     es.indices.create(index=index_name)
 
+# Bulk upload data to Elasticsearch
 print("Uploading data to Elasticsearch...")
 actions = [
     {
@@ -45,6 +49,7 @@ actions = [
 helpers.bulk(es, actions)
 print("Data upload complete!")
 
+# Define the index name
 index_name = "global_terrorism"
 def update_max_result_window(index_name, max_window):
     try:
@@ -60,6 +65,7 @@ def update_max_result_window(index_name, max_window):
     except Exception as e:
         print(f"Error updating max_result_window: {e}")
 
+# Update the setting
 update_max_result_window(index_name, 50000)
 def query_total_incidents():
     try:
@@ -72,20 +78,7 @@ def query_total_incidents():
         return None
 
 
-def query_top_5_countries():
-    query = {
-        "size": 0,
-        "aggs": {
-            "top_countries": {
-                "terms": { "field": "country_txt.keyword", "size": 5 }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    countries = response['aggregations']['top_countries']['buckets']
-    print("Top 5 countries with most incidents:")
-    for country in countries:
-        print(f"{country['key']}: {country['doc_count']} incidents")
+
 
 def query_incidents_by_year():
     query = {
@@ -106,36 +99,6 @@ def query_incidents_by_year():
         year_key = year.get('key_as_string', year.get('key'))
         print(f"Year: {year_key}, Incidents: {year['doc_count']}")
 
-def query_attack_types():
-    query = {
-        "size": 0,
-        "aggs": {
-            "attack_types": {
-                "terms": { "field": "attacktype1_txt.keyword", "size": 5 }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    attack_types = response['aggregations']['attack_types']['buckets']
-    print("Most Common Attack Types:")
-    for attack in attack_types:
-        print(f"{attack['key']}: {attack['doc_count']} incidents")
-
-
-def query_incidents_by_region():
-    query = {
-        "size": 0,
-        "aggs": {
-            "incidents_by_region": {
-                "terms": { "field": "region_txt.keyword", "size": 5 }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    regions = response['aggregations']['incidents_by_region']['buckets']
-    print("Incidents by Region:")
-    for region in regions:
-        print(f"{region['key']}: {region['doc_count']} incidents")
 
 
 def query_deadliest_groups():
@@ -156,21 +119,7 @@ def query_deadliest_groups():
     for group in groups:
         print(f"{group['key']}: {group['total_deaths']['value']} total deaths")
 
-def query_incidents_with_hostages():
-    try:
-        query = {
-            "query": {
-                "range": { "nhostkid": { "gt": 0 } }  # Find incidents with hostages
-            }
-        }
-        # Use the count API to get the exact number of matching documents
-        response = es.count(index=index_name, body=query)
-        total_hostage_incidents = response['count']
-        print(f"Incidents involving hostages: {total_hostage_incidents}")
-        return total_hostage_incidents
-    except Exception as e:
-        print(f"Error querying incidents with hostages: {e}")
-        return None
+
 
 def query_average_casualties():
     query = {
@@ -220,50 +169,10 @@ def query_suicide_attacks():
         return None
 
 
-def query_weapon_types():
-    query = {
-        "size": 0,
-        "aggs": {
-            "weapon_types": {
-                "terms": { "field": "weaptype1_txt.keyword" }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    weapon_types = response['aggregations']['weapon_types']['buckets']
-    print("Incidents by Weapon Type:")
-    for weapon in weapon_types:
-        print(f"{weapon['key']}: {weapon['doc_count']} incidents")
 
-def query_target_types():
-    query = {
-        "size": 0,
-        "aggs": {
-            "target_types": {
-                "terms": { "field": "targtype1_txt.keyword" }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    target_types = response['aggregations']['target_types']['buckets']
-    print("Most Targeted Types of Victims:")
-    for target in target_types:
-        print(f"{target['key']}: {target['doc_count']} incidents")
 
-def query_incidents_with_fatalities():
-    try:
-        query = {
-            "query": {
-                "range": { "nkill": { "gt": 0 } }
-            }
-        }
-        response = es.count(index=index_name, body=query)
-        total_incidents = response['count']
-        print(f"Incidents with fatalities: {total_incidents} incidents")
-        return total_incidents
-    except Exception as e:
-        print(f"Error querying incidents with fatalities: {e}")
-        return None
+
+
 
 
 def query_avg_casualties_by_attack_type():
@@ -283,22 +192,6 @@ def query_avg_casualties_by_attack_type():
     print("Average Casualties by Attack Type:")
     for attack in attack_types:
         print(f"{attack['key']}: {attack['avg_casualties']['value']} average casualties")
-
-def query_top_10_countries_for_attacks():
-    query = {
-        "size": 0,
-        "aggs": {
-            "top_countries": {
-                "terms": { "field": "country_txt.keyword", "size": 10 }
-            }
-        }
-    }
-    response = es.search(index=index_name, body=query)
-    countries = response['aggregations']['top_countries']['buckets']
-    print("Top 10 Countries for Attacks:")
-    for country in countries:
-        print(f"{country['key']}: {country['doc_count']} attacks")
-
 
 
 def query_active_groups_in_2020():
@@ -421,6 +314,7 @@ def query_attack_vs_weapon():
     response = es.search(index="global_terrorism", body=query)
     results = response['aggregations']['attack_types']['buckets']
 
+    # Parsing results for visualization
     data = []
     for attack in results:
         attack_type = attack['key']
@@ -438,18 +332,21 @@ def query_attack_vs_weapon():
         df = pd.DataFrame(data)
         pivot = df.pivot(index="Attack Type", columns="Weapon Type", values="Incidents")
 
-        plt.figure(figsize=(14, 10))  
+        plt.figure(figsize=(14, 10))  # Increased figure size for more space
         heatmap = sns.heatmap(pivot, annot=True, cmap="YlGnBu", fmt="g", linewidths=0.5)
 
         plt.title("Correlation: Attack Types vs Weapon Types", fontsize=16, pad=20)
         plt.ylabel("Attack Type", fontsize=12)
         plt.xlabel("Weapon Type", fontsize=12)
 
+        # Rotate x-axis labels for better visibility
         plt.xticks(rotation=35, ha="right", fontsize=10)
         plt.yticks(fontsize=10)
 
+        # Add padding around the heatmap
         heatmap.figure.subplots_adjust(left=0.2, right=0.9, top=0.9, bottom=0.2)
 
+        # Save the figure (optional, to ensure you retain it with adjustments)
         plt.savefig("attack_vs_weapon_heatmap.png", dpi=300, bbox_inches="tight")
 
         plt.show()
@@ -461,19 +358,11 @@ def query_attack_vs_weapon():
 # Execute all queries
 def run_all_queries():
     query_total_incidents()
-    query_top_5_countries()
-    query_attack_types()
-    query_incidents_by_region()
     query_deadliest_groups()
-    query_incidents_with_hostages()
     query_average_casualties()
     query_incidents_in_afghanistan()
     query_suicide_attacks()
-    query_weapon_types()
-    query_target_types()
-    query_incidents_with_fatalities()
     query_avg_casualties_by_attack_type()
-    query_top_10_countries_for_attacks()
     query_active_groups_in_2020()
     query_incidents_in_middle_east()
     query_fatalities_and_wounds_by_attack_type_and_region()
