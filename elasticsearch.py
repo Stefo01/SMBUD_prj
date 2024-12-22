@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch, helpers
 
 
 username = "elastic"
-password = "password"
+password = "pass"
 es = Elasticsearch(
     ["https://localhost:9200"],
     basic_auth=(username, password), verify_certs=False
@@ -194,23 +194,38 @@ def query_avg_casualties_by_attack_type():
         print(f"{attack['key']}: {attack['avg_casualties']['value']} average casualties")
 
 
-def query_active_groups_in_2020():
+def query_incidents_per_month():
+    # Elasticsearch query to aggregate by year and month
     query = {
         "size": 0,
-        "query": {
-            "term": { "iyear": 2020 }
-        },
         "aggs": {
-            "active_groups": {
-                "terms": { "field": "gname.keyword", "size": 5 }
+            "incidents_per_month": {
+                "terms": {
+                    "script": {
+                        "source": """
+                            if (doc['imonth'].value != null && doc['iyear'].value != null) {
+                                return doc['iyear'].value + '-' + String.format('%02d', doc['imonth'].value);
+                            } else {
+                                return null;
+                            }
+                        """,
+                        "lang": "painless"
+                    },
+                    "size": 10000  # Adjust size to fit the range of years in your dataset
+                }
             }
         }
     }
+
+    # Query Elasticsearch
     response = es.search(index=index_name, body=query)
-    groups = response['aggregations']['active_groups']['buckets']
-    print("Most Active Terrorist Groups in 2020:")
-    for group in groups:
-        print(f"{group['key']}: {group['doc_count']} attacks")
+    buckets = response['aggregations']['incidents_per_month']['buckets']
+
+    # Parse the response
+    data = [{"date": bucket["key"], "incidents": bucket["doc_count"]} for bucket in buckets]
+    return data
+
+
 
 def query_incidents_in_middle_east():
     try:
@@ -363,7 +378,7 @@ def run_all_queries():
     query_incidents_in_afghanistan()
     query_suicide_attacks()
     query_avg_casualties_by_attack_type()
-    query_active_groups_in_2020()
+    query_incidents_per_month()
     query_incidents_in_middle_east()
     query_fatalities_and_wounds_by_attack_type_and_region()
     query_attack_vs_weapon()
