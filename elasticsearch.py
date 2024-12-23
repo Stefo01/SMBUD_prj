@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch, helpers
 
 
 username = "elastic"
-password = "pass"
+password = "password"
 es = Elasticsearch(
     ["https://localhost:9200"],
     basic_auth=(username, password), verify_certs=False
@@ -193,38 +193,55 @@ def query_avg_casualties_by_attack_type():
     for attack in attack_types:
         print(f"{attack['key']}: {attack['avg_casualties']['value']} average casualties")
 
-
+import matplotlib.pyplot as plt
 def query_incidents_per_month():
-    # Elasticsearch query to aggregate by year and month
     query = {
         "size": 0,
         "aggs": {
             "incidents_per_month": {
-                "terms": {
-                    "script": {
-                        "source": """
-                            if (doc['imonth'].value != null && doc['iyear'].value != null) {
-                                return doc['iyear'].value + '-' + String.format('%02d', doc['imonth'].value);
-                            } else {
-                                return null;
-                            }
-                        """,
-                        "lang": "painless"
-                    },
-                    "size": 10000  # Adjust size to fit the range of years in your dataset
+                "composite": {
+                    "sources": [
+                        {"year": {"terms": {"field": "iyear"}}},
+                        {"month": {"terms": {"field": "imonth"}}}
+                    ],
+                    "size": 10000
                 }
             }
         }
     }
 
-    # Query Elasticsearch
     response = es.search(index=index_name, body=query)
     buckets = response['aggregations']['incidents_per_month']['buckets']
+    data = [
+        {"date": f"{bucket['key']['year']}-{str(bucket['key']['month']).zfill(2)}", "incidents": bucket["doc_count"]}
+        for bucket in buckets]
+    dates = [entry['date'] for entry in data]
+    incidents = [entry['incidents'] for entry in data]
 
-    # Parse the response
-    data = [{"date": bucket["key"], "incidents": bucket["doc_count"]} for bucket in buckets]
+    # Convert to a DataFrame for easier manipulation
+    df = pd.DataFrame({'date': dates, 'incidents': incidents})
+
+    # Apply a moving average for smoothing (window size = 6 months)
+    df['smoothed'] = df['incidents'].rolling(window=6, center=True).mean()
+
+    # Plot the smoothed curve
+    plt.figure(figsize=(10, 6))
+    plt.plot(df['date'], df['smoothed'], color='b', linewidth=2, label='Smoothed Incidents')
+
+    plt.title('Incidents per Month (Smoothed)')
+    plt.xlabel('Month (YYYY-MM)')
+    plt.ylabel('Number of Incidents')
+
+    # Adjust x-axis labels: show every 12th label
+    step = 12  # Show one label per year
+    plt.xticks(range(0, len(dates), step), [dates[i] for i in range(0, len(dates), step)], rotation=45, ha='right')
+
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
     return data
-
 
 
 def query_incidents_in_middle_east():
@@ -243,7 +260,8 @@ def query_incidents_in_middle_east():
         print(f"Error querying incidents in Middle East & North Africa: {e}")
         return None
 
-
+import matplotlib.pyplot as plt
+import numpy as np
 def query_fatalities_and_wounds_by_attack_type_and_region():
     query = {
         "size": 0,
@@ -297,6 +315,54 @@ def query_fatalities_and_wounds_by_attack_type_and_region():
             print(f"    Total Fatalities: {total_fatalities}")
             print(f"    Total Injuries: {total_injuries}")
         print()
+    data = {}
+
+    for region in regions:
+        region_name = region['key']
+        attack_types = region['attack_types']['buckets']
+        data[region_name] = {
+            "attack_types": [],
+            "fatalities": [],
+            "injuries": []
+        }
+
+        for attack in attack_types:
+            attack_type = attack['key']
+            total_fatalities = attack['total_fatalities']['value']
+            total_injuries = attack['total_injuries']['value']
+
+            data[region_name]["attack_types"].append(attack_type)
+            data[region_name]["fatalities"].append(total_fatalities)
+            data[region_name]["injuries"].append(total_injuries)
+
+    for region_name, values in data.items():
+        attack_types = values["attack_types"]
+        fatalities = values["fatalities"]
+        injuries = values["injuries"]
+
+        x = np.arange(len(attack_types))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        bars1 = ax.bar(x - width / 2, fatalities, width, label='Fatalities', color='red')
+        bars2 = ax.bar(x + width / 2, injuries, width, label='Injuries', color='blue')
+
+        # Add text for labels, title and axes ticks
+        ax.set_xlabel('Attack Types')
+        ax.set_ylabel('Count')
+        ax.set_title(f'Fatalities and Injuries by Attack Type in {region_name}')
+        ax.set_xticks(x)
+        ax.set_xticklabels(attack_types, rotation=45, ha='right')
+        ax.legend()
+
+        # Annotate bars
+        ax.bar_label(bars1, padding=3)
+        ax.bar_label(bars2, padding=3)
+
+        plt.tight_layout()
+        # save the figure in query9_es_region_name.png
+        plt.savefig(f"query9_es_{region_name}.png", dpi=300, bbox_inches="tight")
+        plt.show()
 
 
 def query_attack_vs_weapon():
