@@ -10,8 +10,8 @@ import pandas as pd
 from pymongo import MongoClient
 
 # Load CSV into a Pandas DataFrame
-csv_file_path = 'your_dataset.csv'
-data = pd.read_csv(csv_file_path)
+# csv_file_path = 'your_dataset.csv'
+# data = pd.read_csv(csv_file_path)
 
 
 # Connect to MongoDB
@@ -43,18 +43,9 @@ print("Total number of entries in MongoDB " + str(cc))
 
 
 # %%
-# Query the collection
-documents = collection.find({"value": {"$gt": 2}})  # Find documents where value > 2
-
-# Print the results
-for doc in documents:
-    print(doc)
-
-
-# descrizione di test per queries:
 
 # 1: luogo di maggiore concentrazione di tutti i reati e il nome di quello più comune in questo luogo
-db.crime_records.aggregate([
+documents = collection.aggregate([
   # Step 1: Raggruppare per borough e sommare i reati
   { "$group": { "_id": "$borough", "totalCrimes": { "$sum": "$value" } } },
   
@@ -74,6 +65,12 @@ db.crime_records.aggregate([
     }
   }
 ])
+
+# Print the results
+for doc in documents:
+    print(doc)
+
+# %%
 
 # 2: luogo di minor concentrazione di tutti i reati (più sicuro)
 db.crime_records.aggregate([
@@ -277,3 +274,5 @@ db.crime_records.aggregate([
   { "$sort": { "percentage": -1 } },
   { "$limit": 3 }
 ])
+
+# %%
