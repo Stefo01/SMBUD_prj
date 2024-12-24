@@ -1,15 +1,6 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
-
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     volumes:
@@ -140,19 +131,6 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
-
-  web-ui:
-    build:
-      context: ./web_ui
-      dockerfile: Dockerfile
-    container_name: web_ui
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongodb
-      - setup
-      - kibana
-      - es01
 
 networks:
  default:

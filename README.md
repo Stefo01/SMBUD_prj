@@ -2,7 +2,7 @@
 
 To set up the project, you'll need to install Docker and Docker Compose. The instructions below assume you're using a Linux system like Ubuntu or WSL.
 
-## 1. Install Docker and Docker Compose
+## 1. Install Docker and Docker Compose for Kibana and elastic search
 
 If you haven't already installed Docker and Docker Compose, follow these commands:
 
@@ -17,22 +17,8 @@ Check the version with:
 docker-compose --version
 ```
 
-## 2. Install npm Dependencies
-
-You'll also need to have the npm package manager installed. If you haven't installed it yet, please do so.
-
-Once npm is installed, navigate to the ```web_ui``` directory and run the following command to install all necessary dependencies:
-
-```bash
-cd /web_ui
-npm install
-```
-
-To verify the installation, check the subdomain after installation.
-
-## 3. Build and run the project
-
-After that to build all the project is sufficient to run in the main folder:
+## 2. Build docker for elastic search and kibana
+After that to build the project is sufficient to run in the main folder:
 
 ```bash
 docker-compose build
@@ -55,15 +41,26 @@ Or ```ctrl+c``` to stop the execution from same terminal.
 
 Note: use ```docker-compose build``` cmd only one time to build everything. It is not necessary to run all the times.
 
+## 3. Run MongoDB docker service
+
+Go into ```MongoDB``` repo and run the following cmds:
+
+```bash
+docker build -t my-mongodb .
+docker run -d -p 27017:27017 --name mongodb my-mongodb
+```
+To run queries, see the ```queries.py```
+
 ## 4. Access services
 
 Finally, you will find all services running at:
 
 - MongoDB: http://localhost:27017
 - Elasticsearch: https://localhost:9200 
-- Kibana: http://localhost:5601 to access the interface
-- Web UI: http://localhost:8080 to see the unified management interface
+- Kibana: http://localhost:5601
 
-For kibana use:
+NOTE: For kibana UI use:
 - UserName: elastic
 - pw: SecureP4ssword
+
+Or go into ```elasticsearch.py``` file and run whatever query you want.

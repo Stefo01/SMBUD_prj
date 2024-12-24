@@ -2,14 +2,8 @@ import pandas as pd
 from elasticsearch import Elasticsearch, helpers
 
 
-
-
-
-
-
-
 username = "elastic"
-password = "password"
+password = "SecureP4ssword"
 es = Elasticsearch(
     ["https://localhost:9200"],
     basic_auth=(username, password), verify_certs=False
