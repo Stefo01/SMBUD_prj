@@ -1,5 +1,5 @@
 import pandas as pd
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch1 import Elasticsearch, helpers
 
 
 username = "elastic"

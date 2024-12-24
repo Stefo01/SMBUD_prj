@@ -66,4 +66,4 @@ NOTE: For kibana UI use:
 - UserName: elastic
 - pw: SecureP4ssword
 
-Or go into ```elasticsearch.py``` file and run whatever query you want.
+Or go into ```elasticsearch1.py``` file and run whatever query you want.
