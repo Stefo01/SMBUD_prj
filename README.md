@@ -63,3 +63,7 @@ Finally, you will find all services running at:
 - Elasticsearch: https://localhost:9200 
 - Kibana: http://localhost:5601 to access the interface
 - Web UI: http://localhost:8080 to see the unified management interface
+
+For kibana use:
+- UserName: elastic
+- pw: SecureP4ssword
