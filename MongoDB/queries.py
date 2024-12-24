@@ -1,10 +1,4 @@
 # %%
-# import kagglehub
-
-# # Download latest version
-# path = kagglehub.dataset_download("jboysen/london-crime")
-
-# print("Path to dataset files:", path)
 
 import pandas as pd
 from pymongo import MongoClient
@@ -18,28 +12,6 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')  # Adjust if MongoDB is on another host/port
 db = client['crime_data']  # Database name
 collection = db['crime_records']  # Collection name
-
-
-# %%
-
-cc = 0
-Totcategoriess = []
-for _, row in data.iterrows():
-    record = {
-        "lsoa_code": row["lsoa_code"],
-        "borough": row["borough"],
-        "major_category": row["major_category"],
-        "minor_category": row["minor_category"],
-        "value": row["value"],
-        "year": row["year"],
-        "month": row["month"]
-    }
-    collection.insert_one(record)  # Insert the record into MongoDB
-    cc += 1
-
-
-print("Data has been successfully imported into MongoDB!")
-print("Total number of entries in MongoDB " + str(cc))
 
 
 # %%

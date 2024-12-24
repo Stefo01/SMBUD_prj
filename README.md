@@ -1,6 +1,7 @@
 # SMBUD Project Setup
 
 To set up the project, you'll need to install Docker and Docker Compose. The instructions below assume you're using a Linux system like Ubuntu or WSL.
+First of all, run the ```pre_queries.py``` file
 
 ## 1. Install Docker and Docker Compose for Kibana and elastic search
 

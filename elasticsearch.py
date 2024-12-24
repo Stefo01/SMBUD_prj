@@ -10,7 +10,7 @@ es = Elasticsearch(
 )
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-dataset_path = "globalterrorismdb.csv"
+dataset_path = "globalterrorismdb_0718dist.csv"
 
 print("Loading the dataset...")
 df = pd.read_csv(dataset_path, encoding="latin1")
