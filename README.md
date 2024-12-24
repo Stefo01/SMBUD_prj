@@ -1,6 +1,6 @@
 # SMBUD Project Setup
 
-To set up the project, you'll need to install Docker and Docker Compose. The instructions below assume you're using a Linux system like Ubuntu or WSL.
+To set up the project, you'll need to install Docker and Docker Compose. The instructions below assume you're using a Linux system like Ubuntu.
 First of all, run the ```pre_queries.py``` file
 
 ## 1. Install Docker and Docker Compose for Kibana and elastic search
@@ -49,6 +49,8 @@ Go into ```MongoDB``` repo and run the following cmds:
 ```bash
 docker build -t my-mongodb .
 docker run -d -p 27017:27017 --name mongodb my-mongodb
+docker cp archive/filtered_file.csv mongodb:/filtered_file.csv
+docker exec -i mongodb mongoimport   --host 0.0.0.0   --port 27017   --db crime_data   --collection crime_records   --type csv   --file filtered_file.csv   --headerline
 ```
 To run queries, see the ```queries.py```
 
